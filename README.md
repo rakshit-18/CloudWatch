@@ -1,8 +1,5 @@
 # CloudWatch: Real-time Monitoring and Analysis
 
-![Project Banner](![image](https://github.com/rakshit-18/CloudWatch/assets/109340645/1b4a7e40-da59-43b5-915c-1e43ced0ec07)
-)
-
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -56,6 +53,10 @@ CloudResource Monitor & AutoScaler is an advanced cloud-native monitoring and au
 ### Demo
 
 ![image](https://github.com/rakshit-18/CloudWatch/assets/109340645/a4f8450d-4f38-4bf8-b370-9eeaafe782f3)
+
 ![image](https://github.com/rakshit-18/CloudWatch/assets/109340645/19eaae5e-a62d-43a5-b66a-78fd724f1f51)
 ![image](https://github.com/rakshit-18/CloudWatch/assets/109340645/ba8afa78-2342-4c9d-be60-4e2a1b35c1de)
+
+![image](https://github.com/rakshit-18/CloudWatch/assets/109340645/bb3ae0c9-269e-4f35-bcd9-25c5cbfa5d7a)
+![image](https://github.com/rakshit-18/CloudWatch/assets/109340645/eb28957d-acda-4261-9aca-4154cf1fb585)
 

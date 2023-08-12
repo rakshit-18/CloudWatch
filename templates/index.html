@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Monitoring</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <style>
+        .gauge-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #start-button {
+            margin-top: 10px;
+            margin-bottom: 30px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .animation-wrapper {
+            position: relative;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #particles-js {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Make sure particles are rendered behind the content */
+        }
+
+        .header {
+            background-color: #1f4068;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 28px;
+            margin: 20px 0;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .gauge {
+            margin: 20px auto;
+            width: 100%;
+            max-width: 600px; /* Increase the max-width for larger gauges */
+            height: 400px; /* Increase the height for larger gauges */
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            padding: 40px; /* Increase padding for more space within the gauge */
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+            font-size: 24px; /* Increase font size for larger text */
+        }
+
+        .alert {
+            background-color: #ff6b6b;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;  /* Initially hidden*/
+        }
+
+        .scrollable-content {
+            max-height: calc(100vh - 160px); /* Adjust the height as needed */
+            overflow-y: auto;
+        }
+
+        body {
+            animation: gradientAnimation 20s infinite alternate;
+        }
+
+        @keyframes gradientAnimation {
+            0% {
+                background: linear-gradient(45deg, #ff6e7f, #bfe9ff);
+            }
+            50% {
+                background: linear-gradient(45deg, #bfe9ff, #ff6e7f);
+            }
+            100% {
+                background: linear-gradient(45deg, #ff6e7f, #bfe9ff);
+            }
+        }
+
+        #start-button {
+            background-color: #1f4068;
+            color: #ffffff;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s; /* Add transform transition */  
+        }
+
+        #start-button:hover {
+            background-color: #18305c;
+        }
+      
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .gauges-container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            margin-bottom: 20px auto;
+            transform: translateY(-50px);
+        }
+
+        .gauge {
+            flex: 1;
+            margin: 0 10px; /* Add margin to create space between gauge boxes */
+            padding: 40px 0; /* Adjust this value to move the gauges up */
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+            font-size: 24px;
+        }
+
+        .centered {
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+        .extraordinary-section {
+            background-color: #1f4068;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 28px;
+            margin: 0px 0; /* Adjust the margin to control the vertical spacing */
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+            opacity: 0; /* Initial opacity set to 0 for the animation */
+            animation: fadeAnimation 1.5s ease-in-out forwards; /* Apply the animation */
+        }
+
+        @keyframes fadeAnimation {
+            0% {
+                opacity: 0; /* Start with opacity 0 */
+                transform: translateY(-20px); /* Start with slight upward translation */
+            }
+            100% {
+                opacity: 1; /* End with opacity 1 */
+                transform: translateY(0); /* End with no translation */
+            }
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 120px); /* Adjust the height for the extraordinary section */
+        }
+
+        .gauges-container {
+            opacity: 0; /* Initial opacity */
+            transform: translateY(20px); /* Initial translateY */
+        }
+
+        .message {
+            text-align: center;
+            font-size: 18px;
+            color: #ff6b6b; /* You can choose a color that fits your design */
+            margin-top: 20px;
+            opacity: 0; /* Start with 0 opacity */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .message.show {
+            opacity: 1; /* When the message should be shown, change opacity to 1 */
+        }
+
+        #message-container {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+            color: red; /* You can adjust the color as needed */
+        }
+
+        .gauge-chart {
+            width: 100%;
+            height: 200px;
+            border-radius: 10px;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+        }
+
+        /* Style the gauge chart titles */
+        .gauge-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333333;
+        }
+
+        #metrics-chart {
+        width: 100%;
+        height: 400px;
+        margin-top: 20px;
+        background-color: #fcfbfb;
+        border-radius: 10px;
+        box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Style the chart title */
+    .plotly-graph-div .main-title {
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    /* Style the chart axis labels */
+    .plotly-graph-div .xtitle, .plotly-graph-div .ytitle {
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    /* Style the chart legend */
+    .plotly-graph-div .legend {
+        font-size: 14px;
+        font-weight: normal;
+    }
+
+    /* Style chart lines and markers */
+    .plotly-graph-div .lines {
+        stroke-width: 2;
+    }
+
+    .plotly-graph-div .scatterpts > path {
+        fill: #ff7f0e; /* Set the marker color */
+    }
+
+    </style>
+  
+</head>
+<body>
+    <div class="extraordinary-section">
+        CloudWatch: Real-time Monitoring and Analysis
+    </div>
+    <div class="main-content">
+        <div class="animation-wrapper">
+            <div id="particles-js"></div>
+        </div>
+        <div class="gauges-container">
+            <div class="gauge" id="cpu-gauge"></div>
+            <div class="gauge" id="mem-gauge"></div>
+        </div>
+        <div class="alert hidden">
+            High CPU or Memory Utilization detected. Please scale up
+        </div>
+        <div class="message" id="message-container"></div>
+        <div class="centered">
+            <button id="start-button" class="hidden" onclick="startMonitoring()">Start Monitoring</button>
+        </div>
+    </div>
+    <div id="metrics-chart"></div> <!-- Add this line chart container -->
+
+    <script>
+        particlesJS('particles-js', {
+            particles: {
+                number: {
+                    value: 80,
+                    density: {
+                        enable: true,
+                        value_area: 800
+                    }
+                },
+                color: {
+                    value: "#ffffff"
+                },
+                shape: {
+                    type: "circle",
+                    stroke: {
+                        width: 0,
+                        color: "#000000"
+                    },
+                    polygon: {
+                        nb_sides: 5
+                    },
+                    image: {
+                        src: "img/github.svg",
+                        width: 100,
+                        height: 100
+                    }
+                },
+                opacity: {
+                    value: 0.5,
+                    random: false,
+                    anim: {
+                        enable: false,
+                        speed: 1,
+                        opacity_min: 0.1,
+                        sync: false
+                    }
+                },
+                size: {
+                    value: 3,
+                    random: true,
+                    anim: {
+                        enable: false,
+                        speed: 40,
+                        size_min: 0.1,
+                        sync: false
+                    }
+                },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: "#ffffff",
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 6,
+                    direction: "none",
+                    random: false,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false,
+                    attract: {
+                        enable: false,
+                        rotateX: 600,
+                        rotateY: 1200
+                    }
+                }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: {
+                    onhover: {
+                        enable: true,
+                        mode: "repulse"
+                    },
+                    onclick: {
+                        enable: true,
+                        mode: "push"
+                    },
+                    resize: true
+                },
+                modes: {
+                    grab: {
+                        distance: 400,
+                        line_linked: {
+                            opacity: 1
+                        }
+                    },
+                    bubble: {
+                        distance: 400,
+                        size: 40,
+                        duration: 2,
+                        opacity: 8,
+                        speed: 3
+                    },
+                    repulse: {
+                        distance: 100
+                    },
+                    push: {
+                        particles_nb: 4
+                    },
+                    remove: {
+                        particles_nb: 2
+                    }
+                }
+            },
+            retina_detect: true
+        });
+    </script>
+    <script>
+        var cpuValue; // Declare globally accessible variable
+        var memValue;
+
+        var cpuGauge = {
+            type: "indicator",
+            mode: "gauge+number",
+            value: 0,
+            gauge: {
+                axis: { range: [null, 100] },
+                bar: { color: "#1f77b4" },
+                bgcolor: "white",
+                borderwidth: 2,
+                bordercolor: "#ccc",
+                steps: [
+                    { range: [0, 50], color: "#d9f0a3" },
+                    { range: [50, 85], color: "#ffeb84" },
+                    { range: [85, 100], color: "#ff5f5f" }
+                ]
+            }
+        };
+        
+        var memGauge = {
+            type: "indicator",
+            mode: "gauge+number",
+            value: 0,
+            gauge: {
+                axis: { range: [null, 100] },
+                bar: { color: "#1f77b4" },
+                bgcolor: "white",
+                borderwidth: 2,
+                bordercolor: "#ccc",
+                steps: [
+                    { range: [0, 50], color: "#d9f0a3" },
+                    { range: [50, 85], color: "#ffeb84" },
+                    { range: [85, 100], color: "#ff5f5f" }
+                ]
+            }
+        };
+
+        document.getElementById('start-button').addEventListener('click', function () {
+            // Use GSAP to animate the gauges container
+            gsap.to('.gauges-container', { opacity: 1, y: 0, duration: 1 });
+        });
+        
+        var cpuGaugeLayout = { title: "CPU Utilization" };
+        var memGaugeLayout = { title: "Memory Utilization" };
+        
+        Plotly.newPlot('cpu-gauge', [cpuGauge], cpuGaugeLayout);
+        Plotly.newPlot('mem-gauge', [memGauge], memGaugeLayout);
+
+        
+        var startButton = document.getElementById('start-button');
+        var gaugesContainer = document.querySelector('.gauges-container');
+        var isMonitoring = false;
+
+        window.addEventListener('load', function () {
+            // Remove the 'hidden' class from the button
+            document.getElementById('start-button').classList.remove('hidden');
+        });
+
+        function startMonitoring() {
+            if (!isMonitoring) {
+                isMonitoring = true;
+                document.getElementById('start-button').classList.add('hidden');
+                initializeGauges(); // Initialize gauges at 0
+                
+                cpuValue = {{ cpu_metric }}; // Get the initial CPU value
+                memValue = {{ mem_metric }}; // Get the initial Memory value
+                
+                animateSpeedometer('cpu-gauge', cpuGauge, cpuValue); // Animate CPU gauge
+                animateSpeedometer('mem-gauge', memGauge, memValue); // Animate Memory gauge
+                // Add the button animation class
+                document.getElementById('start-button').classList.add('hidden');
+                document.querySelector('.message').classList.add('show');
+            }
+        }
+
+        // Animate gauge value updates like a speedometer
+        var messageShown = false; // Add this variable to track message display
+
+        function animateSpeedometer(gaugeDiv, gaugeConfig, finalValue) {
+            gsap.to(gaugeConfig, {
+                value: 100,
+                duration: 2,
+                onUpdate: function () {
+                    Plotly.update(gaugeDiv, { value: [gaugeConfig.value] });
+                },
+                onComplete: function () {
+                    gsap.to(gaugeConfig, {
+                        value: finalValue,
+                        duration: 2,
+                        onUpdate: function () {
+                            Plotly.update(gaugeDiv, { value: [gaugeConfig.value] });
+                        },
+                        onComplete: function () {
+                            // After the initial animation, start updating the actual values
+                            setInterval(updateMetrics, 5000);
+                        }
+                    });
+                }
+            });
+        }
+
+        function showMessage(message) {
+            var messageContainer = document.querySelector(".message");
+            messageContainer.innerText = message;
+            messageContainer.classList.add("show");
+            messageShown = true; // Set messageShown to true when message is shown
+        }
+
+        function hideMessage() {
+            var messageContainer = document.querySelector(".message");
+            messageContainer.classList.remove("show");
+            messageShown = false; // Set messageShown to false when message is hidden
+        }
+
+        function initializeGauges() {
+            Plotly.update('cpu-gauge', { value: [0] });
+            Plotly.update('mem-gauge', { value: [0] });
+        }
+
+        var metricData = [];
+
+        // Function to update the line chart with metric data
+        function updateLineChart() {
+            var timestamps = metricData.map(entry => entry.timestamp);
+            var cpuValues = metricData.map(entry => entry.cpu);
+            var memValues = metricData.map(entry => entry.memory);
+
+            var cpuTrace = {
+                x: timestamps,
+                y: cpuValues,
+                mode: 'lines',
+                name: 'CPU',
+                line: { color: '#1f77b4' }
+            };
+
+            var memTrace = {
+                x: timestamps,
+                y: memValues,
+                mode: 'lines',
+                name: 'Memory',
+                line: { color: '#ff7f0e' }
+            };
+
+            var layout = {
+                title: {
+                    text: 'Metric Trends',
+                    font: {
+                        size: 24,
+                        color: '#333' // Title color
+                    }
+                },
+                xaxis: {
+                    title: {
+                        text: 'Timestamp',
+                        font: {
+                            size: 16,
+                            color: '#666' // X-axis label color
+                        }
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Value',
+                        font: {
+                            size: 16,
+                            color: '#666' // Y-axis label color
+                        }
+                    }
+                },
+                legend: {
+                    font: {
+                        size: 14,
+                        color: '#444' // Legend text color
+                    }
+                },
+                plot_bgcolor: '#f5f5f5', // Chart background color
+                paper_bgcolor: '#ffffff', // Paper (outside chart) background color
+                margin: { t: 50, b: 50, l: 50, r: 50 }, // Margin around the chart
+                showlegend: true // Show legend
+            };
+
+            Plotly.newPlot('metrics-chart', [cpuTrace, memTrace], layout);
+        }
+
+        function updateMetrics() {
+            console.log('Updating metrics...');
+            fetch('/metric_data')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Fetched data:', data);
+
+                    var cpuValue = data.cpu;
+                    var memValue = data.memory;
+                    var timestamp = new Date().toISOString();
+
+                    metricData.push({ timestamp, cpu: cpuValue, memory: memValue });
+
+                    console.log('Updating CPU gauge with value:', cpuValue);
+                    console.log('Updating Memory gauge with value:', memValue);
+
+                    animateGaugeUpdate('cpu-gauge', cpuGauge, cpuValue);
+                    animateGaugeUpdate('mem-gauge', memGauge, memValue);
+
+                    updateLineChart();
+
+                    if (!messageShown && (cpuValue >80 || memValue > 80)) {
+                        showMessage("High CPU or Memory Utilization detected. Please scale up");
+                    } else if (messageShown && cpuValue <= 80 && memValue <= 80) {
+                        hideMessage();
+                    }
+
+                    // Update the line chart only if there's more than one data point
+                    if (metricData.length > 1) {
+                        updateLineChart();
+                    }
+                })
+                .catch(error => console.error('Error fetching metric data:', error));
+        }
+
+        // Animate gauge value updates using GSAP
+        function animateGaugeUpdate(gaugeDiv, gaugeConfig, newValue) {
+            gsap.to(gaugeConfig, {
+                value: newValue,
+                duration: 1, // Animation duration in seconds
+                onUpdate: function () {
+                    Plotly.update(gaugeDiv, { value: [gaugeConfig.value] });
+                },
+                immediateRender: false, // Prevent immediate rendering of animation
+                ease: "none" // Use linear easing to avoid stacking up calls
+            });
+        }
+    </script>
+</body>
+</html>
